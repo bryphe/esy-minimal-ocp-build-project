@@ -1,0 +1,287 @@
+{
+  "hash": "74b5c5f47c44af891cd76f26ee69136a",
+  "root": "esy-minimal-ocp-build-project@path:.",
+  "node": {
+    "ocaml@4.6.5": {
+      "record": {
+        "name": "ocaml",
+        "version": "4.6.5",
+        "source":
+          "archive:https://registry.npmjs.org/ocaml/-/ocaml-4.6.5.tgz#sha1:23b6d4dc36437f431c427953a5236447e7b51368",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": []
+    },
+    "esy-minimal-ocp-build-project@path:.": {
+      "record": {
+        "name": "esy-minimal-ocp-build-project",
+        "version": "path:.",
+        "source": "path:.",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": [ "@opam/ocp-build@opam:1.99.20-beta", "ocaml@4.6.5" ]
+    },
+    "@opam/topkg@opam:0.9.1": {
+      "record": {
+        "name": "@opam/topkg",
+        "version": "opam:0.9.1",
+        "source": [
+          "archive:https://opam.ocaml.org/archives/topkg.0.9.1+opam.tar.gz#md5:1ec2522f346d19bf4c24c3c0b2e3e8bd",
+          "archive:http://erratique.ch/software/topkg/releases/topkg-0.9.1.tbz#md5:8978a0595db1a22e4251ec62735d4b84"
+        ],
+        "files": [],
+        "opam": {
+          "name": "topkg",
+          "version": "0.9.1",
+          "opam":
+            "opam-version: \"1.2\"\nname: \"topkg\"\nversion: \"0.9.1\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"packaging\" \"ocamlbuild\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/topkg\"\ndoc: \"http://erratique.ch/software/topkg/doc\"\nbug-reports: \"https://github.com/dbuenzli/topkg/issues\"\ndepends: [\n  \"ocamlfind\" {build & >= \"1.6.1\"}\n  \"ocamlbuild\"\n  \"result\"\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\n  \"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pkg-name\" name \"--dev-pkg\" \"%{pinned}%\"\n]\ndev-repo: \"git+http://erratique.ch/repos/topkg.git\"",
+          "override": null
+        }
+      },
+      "dependencies": [
+        "@esy-ocaml/substs@0.0.1", "@opam/ocamlbuild@opam:0.12.0",
+        "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3"
+      ]
+    },
+    "@opam/result@opam:1.3": {
+      "record": {
+        "name": "@opam/result",
+        "version": "opam:1.3",
+        "source": [
+          "archive:https://opam.ocaml.org/archives/result.1.3+opam.tar.gz#md5:627b5fd1f70949a36e38cb2798021f9a",
+          "archive:https://github.com/janestreet/result/releases/download/1.3/result-1.3.tbz#md5:4beebefd41f7f899b6eeba7414e7ae01"
+        ],
+        "files": [],
+        "opam": {
+          "name": "result",
+          "version": "1.3",
+          "opam":
+            "opam-version: \"1.2\"\nname: \"result\"\nversion: \"1.3\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"BSD3\"\nhomepage: \"https://github.com/janestreet/result\"\nbug-reports: \"https://github.com/janestreet/result/issues\"\ndepends: [\n  \"jbuilder\" {build & >= \"1.0+beta11\"}\n]\nbuild: [\"jbuilder\" \"build\" \"-p\" name \"-j\" jobs]\ndev-repo: \"git+https://github.com/janestreet/result.git\"",
+          "override": null
+        }
+      },
+      "dependencies": [
+        "@esy-ocaml/substs@0.0.1", "@opam/jbuilder@opam:transition"
+      ]
+    },
+    "@opam/ocp-build@opam:1.99.20-beta": {
+      "record": {
+        "name": "@opam/ocp-build",
+        "version": "opam:1.99.20-beta",
+        "source": [
+          "archive:https://opam.ocaml.org/archives/ocp-build.1.99.20-beta+opam.tar.gz#md5:9743ce4c218b25569577270859cb6665",
+          "archive:http://github.com/OCamlPro/ocp-build/archive/1.99.20-beta.tar.gz#md5:72d9c1b1a42d1873628e2d6e7529d8cb"
+        ],
+        "files": [
+          {
+            "name": "_esy/ocp-build-1.99.20-beta.patch",
+            "content":
+              "--- ./libs/ocplib-file/fileGen.ml\n+++ ./libs/ocplib-file/fileGen.ml\n@@ -141,7 +141,7 @@\n let add_basename_string dir basename =\n   match dir.file_basename with\n   | \"\" | \"/\" | \"\\\\\" ->\n-    dir.file_basename ^ basename\n+    dir.file_partition ^ dir.file_basename ^ basename\n   | _ ->\n     dir.file_string ^ FileOS.dir_separator_string ^ basename\n \n@@ -303,7 +303,13 @@\n   let s1, s2  = OcpString.cut_at s ':' in\n   let ss = if s1 == s then s else s2 in\n   let part = if s1 == s then \"\" else (String.lowercase s1) ^ \":\" in\n-  let path = OcpString.split ss '\\\\' in\n+  let len = String.length ss in\n+  let b = Buffer.create len in\n+  for i = 0 to len - 1 do\n+    let c = String.get ss i in\n+    Buffer.add_char b (if c = '/' then '\\\\' else c)\n+  done;\n+  let path = OcpString.split (Buffer.contents b) '\\\\' in\n   of_path part path\n \n let of_string s =\n--- ./libs/ocplib-unix/build.ocp2\n+++ ./libs/ocplib-unix/build.ocp2\n@@ -32,7 +32,7 @@\n   ];\n \n   if( system = \"win64\" ) {\n-    ocaml.requires = [ \"unix\" ];\n+    ocaml.requires = [ \"unix\" ] + string_compat;\n     ocaml.link = [ \"-cclib\"; \"user32.lib\"; ];\n   } else {\n (* We require \"Unix\", but do not use it directly !!! *)\n--- ./libs/ocplib-unix/minUnix_c.c\n+++ ./libs/ocplib-unix/minUnix_c.c\n@@ -10,13 +10,12 @@\n /*                                                                        */\n /**************************************************************************/\n \n-#include <caml/mlvalues.h>\n-\n #ifdef _WIN32\n \n #include <winsock2.h>\n #include <windows.h>\n #include <sys/types.h>\n+#include <io.h>\n \n #endif\n \n@@ -24,6 +23,17 @@\n #include <caml/alloc.h>\n #include <caml/memory.h>\n #include <caml/signals.h>\n+#include <caml/misc.h>\n+/* very dirty: CAMLassert is exposed since 4.02, when caml/version.h was \n+   also introduced */\n+#ifdef CAMLassert\n+#include <caml/version.h>\n+#else\n+#define OCAML_VERSION_MAJOR 4\n+#define OCAML_VERSION_MINOR 0\n+#define OCAML_VERSION_PATCHLEVEL 0\n+#endif\n+\n \n #ifndef CAML_UNIXSUPPORT_H\n #include <caml/unixsupport.h>\n@@ -31,14 +41,20 @@\n #endif\n \n /* Versions before 4.02.0 use unix_ prefixes for these functions */\n+/* Really ??? */\n \n-#if OCAML_VERSION_OCP == 4010001\n+#if 0 && (OCAML_VERSION_MAJOR < 4 || (OCAML_VERSION_MAJOR == 4 && OCAML_VERSION_MINOR < 2))\n #define win_cleanup unix_cleanup\n #define win_filedescr_of_channel  unix_filedescr_of_channel\n #define win_inchannel_of_filedescr  unix_inchannel_of_filedescr\n #define win_outchannel_of_filedescr unix_outchannel_of_filedescr\n #define win_startup unix_startup\n #define win_waitpid unix_waitpid\n+extern value unix_startup(value);\n+extern value unix_cleanup(value);\n+#else\n+extern value win_startup(value);\n+extern value win_cleanup(value);\n #endif\n \n /* There is a test in win_starup/win_cleanup, so there is no\n--- ./libs/ocplib-unix/minUnix.ml\n+++ ./libs/ocplib-unix/minUnix.ml\n@@ -302,7 +302,7 @@\n external set_nonblock : file_descr -> unit = \"unix_set_nonblock\"\n external clear_nonblock : file_descr -> unit = \"unix_clear_nonblock\"\n external set_close_on_exec : file_descr -> unit = \"unix_set_close_on_exec\"\n-external clear_close_on_exec : file_descr -> unit = \"unix_clear_close_on_exec\"\n+external clear_close_on_exec : file_descr -> unit = \"win_clear_close_on_exec\"\n \n external mkdir : string -> file_perm -> unit = \"unix_mkdir\"\n external rmdir : string -> unit = \"unix_rmdir\"\n--- ./libs/ocplib-unix/onlyUnix_c.c\n+++ ./libs/ocplib-unix/onlyUnix_c.c\n@@ -25,6 +25,15 @@\n #include <caml/memory.h>\n #include <caml/signals.h>\n #include <caml/fail.h>\n+/* very dirty: CAMLassert is exposed since 4.02, when caml/version.h was \n+   also introduced */\n+#ifdef CAMLassert\n+#include <caml/version.h>\n+#else\n+#define OCAML_VERSION_MAJOR 4\n+#define OCAML_VERSION_MINOR 0\n+#define OCAML_VERSION_PATCHLEVEL 0\n+#endif\n \n #ifndef CAML_UNIXSUPPORT_H\n #include <caml/unixsupport.h>\n@@ -49,18 +58,21 @@\n UNAVAILABLE_PRIM(unix_umask)\n UNAVAILABLE_PRIM(unix_chown)\n UNAVAILABLE_PRIM(unix_fchown)\n-UNAVAILABLE_PRIM(unix_fchown)\n UNAVAILABLE_PRIM(unix_chroot)\n UNAVAILABLE_PRIM(unix_mkfifo)\n+#if OCAML_VERSION_MAJOR < 4 || ( OCAML_VERSION_MAJOR == 4 && OCAML_VERSION_MINOR < 3 )\n UNAVAILABLE_PRIM(unix_readlink)\n UNAVAILABLE_PRIM(unix_symlink)\n #endif\n+#endif\n \n UNAVAILABLE_PRIM(unix_clear_close_on_exec)\n UNAVAILABLE_PRIM(unix_closedir)\n \n UNAVAILABLE_PRIM(unix_getppid)\n+#if OCAML_VERSION_MAJOR < 4 || ( OCAML_VERSION_MAJOR == 4 && OCAML_VERSION_MINOR < 6 )\n UNAVAILABLE_PRIM(unix_isatty)\n+#endif\n UNAVAILABLE_PRIM(unix_opendir)\n UNAVAILABLE_PRIM(unix_readdir)\n UNAVAILABLE_PRIM(unix_rewinddir)\n--- ./libs/ocplib-unix/onlyWin32_c.c\n+++ ./libs/ocplib-unix/onlyWin32_c.c\n@@ -32,6 +32,8 @@\n #define CAML_UNIXSUPPORT_H\n #endif\n \n+extern char * caml_search_exe_in_path(char * name);\n+\n #ifdef _WIN32\n static value alloc_process_status(HANDLE pid, int status)\n {\n--- ./Makefile\n+++ ./Makefile\n@@ -4,6 +4,7 @@\n include $(MAKE_CONFIG)\n \n OBUILD_DSTDIR=_obuild\n+EXT_OBJ:=$(shell $(OCAMLC) -config | awk -F '[\\t\\r ]+' '/^ext_obj:/ {print $$2}')\n \n # If you add a library ocplib-xxx:\n # 1/ Update this list with xxx_SRCDIR=\n@@ -26,7 +27,7 @@\n EXTERNAL_INCLUDES=    -I ${CMDLINER_DIR}\n EXTERNAL_LIBS=${CMDLINER_DIR}/cmdliner.cmxa\n \n-INCLUDES=$(foreach lib, $(OCPLIB_NAMES), -I $($(lib)_SRCDIR)) \\\n+XINCLUDES=$(foreach lib, $(OCPLIB_NAMES), -I $($(lib)_SRCDIR)) \\\n     -I $(OCP_BUILD_SRCDIR) \\\n     -I libs/ezcmd \\\n     -I $(OCP_BUILD_SRCDIR)/misc \\\n@@ -177,13 +178,13 @@\n OCP_BUILD_CMOS= $(OCP_BUILD_MLS:.ml=.cmo)\n OCP_BUILD_MLIS= $(OCP_BUILD_MLS:.ml=.mli)\n OCP_BUILD_CMIS= $(OCP_BUILD_MLS:.ml=.cmi)\n-OCP_BUILD_STUBS= $(OCP_BUILD_CS:.c=.o)\n+OCP_BUILD_STUBS= $(OCP_BUILD_CS:.c=$(EXT_OBJ))\n OCP_BUILD_TMPS= $(OCP_BUILD_MLYS:.mly=.mli) $(OCP_BUILD_MLYS:.mly=.ml) \\\n \t$(OCP_BUILD_MLLS:.mll=.ml) $(OCP_BUILD_ML4S:.ml4=.ml) \\\n \t$(OCP_BUILD_SRCDIR)/buildVersion.ml \\\n \t$(compat_SRCDIR)/ocpCompat.ml\n \n-OCP_BUILD_OS= $(OCP_BUILD_STUBS) $(OCP_BUILD_CMXS:.cmx=.o)\n+OCP_BUILD_OS= $(OCP_BUILD_STUBS) $(OCP_BUILD_CMXS:.cmx=$(EXT_OBJ))\n \n all: build-ocps\n \t@echo Libraries will be installed in ${ocamldir}\n@@ -195,7 +196,7 @@\n \t$(OCP_BUILD_BOOTER)\n \n depend: $(OCP_BUILD_MLS) $(OCP_BUILD_TMPS)\n-\t$(OCAMLDEP) $(INCLUDES) $(OCP_BUILD_MLS) $(OCP_BUILD_MLIS) > .depend\n+\t$(OCAMLDEP) $(XINCLUDES) $(OCP_BUILD_MLS) $(OCP_BUILD_MLIS) > .depend\n \n $(OCP_BUILD_BOOTER): $(MAKE_CONFIG)\n \t$(MAKE) create-booter\n@@ -223,10 +224,10 @@\n \techo \"let version=\\\"$(PACKAGE_VERSION)\\\"\" > $(OCP_BUILD_SRCDIR)/buildVersion.ml\n \n $(OCP_BUILD_SRCDIR)/lang-ocp/buildOCPParser.cmi: $(OCP_BUILD_SRCDIR)/lang-ocp/buildOCPParser.mli\n-\t$(OCAMLC) -c -o $(OCP_BUILD_SRCDIR)/lang-ocp/buildOCPParser.cmi $(EXTERNAL_INCLUDES) $(INCLUDES) $(OCP_BUILD_SRCDIR)/lang-ocp/buildOCPParser.mli\n+\t$(OCAMLC) -c -o $(OCP_BUILD_SRCDIR)/lang-ocp/buildOCPParser.cmi $(EXTERNAL_INCLUDES) $(XINCLUDES) $(OCP_BUILD_SRCDIR)/lang-ocp/buildOCPParser.mli\n \n $(OCP_BUILD_SRCDIR)/lang-ocp2/buildOCP2Parser.cmi: $(OCP_BUILD_SRCDIR)/lang-ocp2/buildOCP2Parser.mli\n-\t$(OCAMLC) -c -o $(OCP_BUILD_SRCDIR)/lang-ocp2/buildOCP2Parser.cmi $(EXTERNAL_INCLUDES) $(INCLUDES) $(OCP_BUILD_SRCDIR)/lang-ocp2/buildOCP2Parser.mli\n+\t$(OCAMLC) -c -o $(OCP_BUILD_SRCDIR)/lang-ocp2/buildOCP2Parser.cmi $(EXTERNAL_INCLUDES) $(XINCLUDES) $(OCP_BUILD_SRCDIR)/lang-ocp2/buildOCP2Parser.mli\n \n doc:\n \tcd docs/user-manual; $(MAKE)\n@@ -323,7 +324,7 @@\n OCP_BUILD:=$(OCP_BUILD_BOOTER)\n include autoconf/Makefile.rules\n \n-.SUFFIXES: .ml .mll .mli .mly .c .o .cmo .cmi .cmx\n+.SUFFIXES: .ml .mll .mli .mly .c $(EXT_OBJ) .cmo .cmi .cmx\n \n .mll.ml:\n \t$(OCAMLLEX) $<\n@@ -332,17 +333,14 @@\n \t$(OCAMLYACC) $<\n \n .ml.cmx:\n-\t$(OCAMLOPT) -c -o $*.cmx $(EXTERNAL_INCLUDES) $(INCLUDES) $<\n+\t$(OCAMLOPT) -c -o $*.cmx $(EXTERNAL_INCLUDES) $(XINCLUDES) $<\n \n .mli.cmi:\n-\t$(OCAMLC) -c -o $*.cmi $(EXTERNAL_INCLUDES) $(INCLUDES) $<\n+\t$(OCAMLC) -c -o $*.cmi $(EXTERNAL_INCLUDES) $(XINCLUDES) $<\n \n .ml.cmo:\n-\t$(OCAMLC) -c -o $*.cmo $(EXTERNAL_INCLUDES) $(INCLUDES) $<\n-\n-.c.o:\n-\t$(OCAMLC) -c $(INCLUDES) $<\n-\tmv `basename $*.o` $*.o\n-\n-\n+\t$(OCAMLC) -c -o $*.cmo $(EXTERNAL_INCLUDES) $(XINCLUDES) $<\n \n+.c$(EXT_OBJ):\n+\t$(OCAMLC) -c $(XINCLUDES) $<\n+\tmv `basename $*$(EXT_OBJ)` $*$(EXT_OBJ)\n--- ./tools/ocp-build/misc/buildMisc.ml\n+++ ./tools/ocp-build/misc/buildMisc.ml\n@@ -206,9 +206,17 @@\n       create_process error_handler cmd args maybe_chdir fd1 fd2 fd3\n end\n \n+let do_clear_close_on_exec =\n+  let ocaml_major,ocaml_minor =\n+    Scanf.sscanf Sys.ocaml_version \"%u.%u\" (fun a b -> a, b) in\n+  ocaml_major > 4 || ( ocaml_major = 4 && ocaml_minor >= 6)\n+\n let open_for_pipe filename =\n   let oc = open_out_bin filename in\n-  MinUnix.descr_of_out_channel oc\n+  let fd = MinUnix.descr_of_out_channel oc in\n+  if do_clear_close_on_exec then\n+    MinUnix.clear_close_on_exec fd;\n+  fd\n \n let create_process cmd maybe_chdir stdin stdout stderr =\n   match cmd with\n@@ -218,7 +226,10 @@\n         None -> MinUnix.stdin\n       | Some filename ->\n         let ic = open_in_bin filename in\n-        MinUnix.descr_of_in_channel ic\n+        let fd = MinUnix.descr_of_in_channel ic in\n+        if do_clear_close_on_exec then\n+          MinUnix.clear_close_on_exec fd;\n+        fd\n     in\n     let stdout_fd = match stdout with\n         None -> MinUnix.stdout\n--- ./tools/ocp-build/ocaml/buildOCamlMeta.ml\n+++ ./tools/ocp-build/ocaml/buildOCamlMeta.ml\n@@ -146,10 +146,13 @@\n                       VObject (BuildValue.set_bool BuildValue.empty_env \"tolink\" link)]\n             ) requires)) in\n           let options = BuildValue.set_bool options \"generated\" true in\n-\n+          let envs = [options] in\n+          let ext_lib = BuildOCamlConfig.ocaml_config_ext_lib.get envs in\n+          let ext_obj = BuildOCamlConfig.ocaml_config_ext_obj.get envs in\n+  \n           let stub_targets = List.filter (fun file ->\n-                                 Filename.check_suffix file \".o\"\n-                                 || Filename.check_suffix file \".a\")\n+                                 Filename.check_suffix file ext_obj\n+                                 || Filename.check_suffix file ext_lib)\n                                          byte_targets in\n           let byte_targets, asm_targets =\n             match stub_targets with\n--- ./tools/ocp-build/ocaml/buildOCamlRules.ml\n+++ ./tools/ocp-build/ocaml/buildOCamlRules.ml\n@@ -1044,15 +1044,16 @@\n       Printf.eprintf \"Error: in package %S, copy_objects_from %S, no such package\\n%!\" lib.lib.lib_name name;\n       clean_exit 2\n \n-let copy_ml_objects_from lib ptmp src_lib kernel_name =\n+let copy_ml_objects_from lib ptmp src_lib kernel_name envs =\n   (* TODO: check that pack_for = [] *)\n   (* TODO: check that src_lib is in requires *)\n   do_copy_objects_from lib src_lib kernel_name \".cmi\" ptmp.cmi_files;\n   if lib.lib_opk.opk_has_byte  then\n     do_copy_objects_from lib src_lib kernel_name \".cmo\" ptmp.cmo_files;\n   if lib.lib_opk.opk_has_asm then begin\n+    let ext_obj  = BuildOCamlConfig.ocaml_config_ext_obj.get envs  in\n     do_copy_objects_from lib src_lib kernel_name \".cmx\" ptmp.cmx_files;\n-    do_copy_objects_from lib src_lib kernel_name \".o\" ptmp.cmx_o_files;\n+    do_copy_objects_from lib src_lib kernel_name ext_obj ptmp.cmx_o_files;\n   end\n \n let object_dst_dir b lib pack_for =\n@@ -1576,7 +1577,7 @@\n     let copy_objects_from = get_copy_objects_from lib envs  in\n     match copy_objects_from with\n     | Some src_lib ->\n-      copy_ml_objects_from lib ptmp src_lib kernel_name\n+      copy_ml_objects_from lib ptmp src_lib kernel_name envs\n \n     | None ->\n \n@@ -1958,7 +1959,7 @@\n     let copy_objects_from = get_copy_objects_from lib envs  in\n     match copy_objects_from with\n     | Some src_lib ->\n-      copy_ml_objects_from lib ptmp src_lib kernel_name\n+      copy_ml_objects_from lib ptmp src_lib kernel_name envs\n     | None ->\n \n (*    let tmp_dirname =\n@@ -1989,7 +1990,7 @@\n     let copy_objects_from = get_copy_objects_from lib envs  in\n     match copy_objects_from with\n     | Some src_lib ->\n-      copy_ml_objects_from lib ptmp src_lib kernel_name\n+      copy_ml_objects_from lib ptmp src_lib kernel_name envs\n     | None ->\n \n       let _ = () in\n@@ -2695,6 +2696,7 @@\n     ) state.BuildOCPTypes.project_sorted\n   in\n   Array.iter (fun lib ->\n+    let envs = lib.lib_opk.opk_options in\n     try\n       if not lib.lib_opk.opk_installed then\n         safe_mkdir lib.lib.lib_dst_dir.dir_fullname;\n@@ -2746,11 +2748,13 @@\n               | \"byte\"  when List.mem RUN_BYTE kinds -> [ bf, RUN_BYTE ]\n               | \"cmxs\" when List.mem CMXS kinds -> [ bf, CMXS ]\n               | \"cmx\" when List.mem CMX kinds ->\n-                let s = Filename.chop_extension s ^ \".o\" in\n+                let ext_obj  = BuildOCamlConfig.ocaml_config_ext_obj.get envs  in\n+                let s = Filename.chop_extension s ^ ext_obj in\n                 let bf2 = add_package_file lib s in\n                 [ bf, CMX; bf2, CMX_O ]\n               | \"cmxa\" ->\n-                let s = Filename.chop_extension s ^ \".a\" in\n+                let ext_lib  = BuildOCamlConfig.ocaml_config_ext_lib.get envs  in\n+                let s = Filename.chop_extension s ^ ext_lib in\n                 let bf2 = add_package_file lib s in\n                 [ bf, CMXA; bf2, CMXA_A ]\n               | \"cmi\" when List.mem CMI kinds -> [ bf, CMI ]\n@@ -2759,11 +2763,15 @@\n               | \"o\" when List.mem STUB_A kinds -> [ bf, STUB_A ]\n               | \"a\" when List.mem STUB_A kinds -> [ bf, STUB_A ]\n               | ext ->\n+                let ext_obj  = BuildOCamlConfig.ocaml_config_ext_obj.get envs  in\n+                let ext_lib  = BuildOCamlConfig.ocaml_config_ext_lib.get envs  in\n+                let dext = \".\" ^ ext in\n+                if dext = ext_lib || dext = ext_obj then [ bf, STUB_A ] else (\n                 Printf.eprintf\n                   \"Error: package %S, option %S contains a file %S\\n\"\n                   lib.lib.lib_name name s0;\n                 Printf.eprintf \"  with unexpected extension %S\\n%!\" ext;\n-                exit 2\n+                exit 2)\n               ) objs))\n       in\n \n"
+          }
+        ],
+        "opam": {
+          "name": "ocp-build",
+          "version": "1.99.20-beta",
+          "opam":
+            "opam-version: \"1.2\"\nname: \"ocp-build\"\nversion: \"1.99.20-beta\"\nmaintainer: \"Fabrice Le Fessant <fabrice.le_fessant@ocamlpro.com>\"\nauthors: \"Fabrice Le Fessant <fabrice.le_fessant@ocamlpro.com>\"\nhomepage: \"http://www.typerex.org/ocp-build.html\"\nbug-reports: \"https://github.com/OCamlPro/ocp-build/issues\"\ndepends: [\n  \"ocamlfind\"\n  \"cmdliner\" {>= \"1.0\"}\n]\nconflicts: [\n  \"typerex\" {< \"1.99.7\"}\n  \"typerex-build\"\n]\navailable: ocaml-version >= \"4.02.1\"\nbuild: [\n  [\"./configure\" \"--prefix\" \"%{prefix}%\"]\n  [make]\n]\ninstall: [make \"install\"]\nremove: [\n  [\"rm\" \"-f\" \"%{prefix}%/bin/ocp-build\"]\n  [\"rm\" \"-f\" \"%{prefix}%/bin/ocp-pp\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocp-build\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-compat\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-debug\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-lang\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-subcmd\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-system\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/ocplib-unix\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/typerex/installed.ocp\"]\n  [\"rm\" \"-rf\" \"%{prefix}%/lib/ocaml/site-ocp2/ocp-build\"]\n  [\"sh\" \"-exc\" \"rmdir %{prefix}%/lib/ocaml/typerex || true\"]\n]\ndev-repo: \"git+https://github.com/OCamlPro/ocp-build.git\"",
+          "override": {
+            "build": [
+              [
+                "bash", "-c",
+                "#{os == 'windows' ? 'patch -p1 < _esy/ocp-build-1.99.20-beta.patch' : 'true'}"
+              ],
+              [ "./configure", "--prefix", "#{self.install}" ],
+              [ "make" ]
+            ]
+          }
+        }
+      },
+      "dependencies": [
+        "@esy-ocaml/substs@0.0.1", "@opam/cmdliner@opam:1.0.2",
+        "@opam/ocamlfind@opam:1.8.0"
+      ]
+    },
+    "@opam/ocamlfind@opam:1.8.0": {
+      "record": {
+        "name": "@opam/ocamlfind",
+        "version": "opam:1.8.0",
+        "source": [
+          "archive:https://opam.ocaml.org/archives/ocamlfind.1.8.0+opam.tar.gz#md5:4d70eaf49e0f5f4d84257391088da0a2",
+          "archive:http://download.camlcity.org/download/findlib-1.8.0.tar.gz#md5:a710c559667672077a93d34eb6a42e5b",
+          "archive:http://download2.camlcity.org/download/findlib-1.8.0.tar.gz#md5:a710c559667672077a93d34eb6a42e5b"
+        ],
+        "files": [
+          {
+            "name": "ocaml-stub",
+            "content":
+              "#!/bin/sh\n\nBINDIR=$(dirname \"$(command -v ocamlc)\")\n\"$BINDIR/ocaml\" -I \"$OCAML_TOPLEVEL_PATH\" \"$@\"\n"
+          },
+          {
+            "name": "ocamlfind.install",
+            "content":
+              "bin: [\n  \"src/findlib/ocamlfind\" {\"ocamlfind\"}\n  \"?src/findlib/ocamlfind_opt\" {\"ocamlfind\"}\n  \"?tools/safe_camlp4\"\n]\ntoplevel: [\"src/findlib/topfind\"]\n"
+          },
+          {
+            "name": "_esy/build",
+            "content":
+              "#!/bin/bash\n\nset -euo pipefail\nset -x\n\n#\n# Shim OCAMLLIB so that we can write topfind there\n#\n\nREAL_OCAMLLIB=\"$1\"\n\nmkdir -p $cur__install/lib/ocaml\ncd $cur__install/lib/ocaml\n\nfor filename in `ls -1 $REAL_OCAMLLIB`; do\n  ln -s $REAL_OCAMLLIB/$filename $filename;\ndone\n\n#\n# Build\n#\n\ncd $cur__root\n\nexport OCAMLLIB=\"$cur__install/lib/ocaml\"\n\n./configure \\\n  -bindir $cur__install/bin \\\n  -sitelib $cur__install/lib \\\n  -mandir $cur__install/man \\\n  -config $cur__install/lib/findlib.conf \\\n  -no-custom \\\n  -no-camlp4\n\nmake all\nmake opt\nmake install\n\n(opam-installer --prefix=$cur__install || true)\n"
+          }
+        ],
+        "opam": {
+          "name": "ocamlfind",
+          "version": "1.8.0",
+          "opam":
+            "opam-version: \"1.2\"\nname: \"ocamlfind\"\nversion: \"1.8.0\"\nmaintainer: \"Thomas Gazagnaire <thomas@gazagnaire.org>\"\nauthors: \"Gerd Stolpmann <gerd@gerd-stolpmann.de>\"\nhomepage: \"http://projects.camlcity.org/projects/findlib.html\"\nbug-reports: \"https://gitlab.camlcity.org/gerd/lib-findlib/issues\"\ndepends: [\n  \"conf-m4\" {build}\n]\navailable: ocaml-version >= \"4.00.0\"\nbuild: [\n  [\n    \"./configure\"\n    \"-bindir\"\n    bin\n    \"-sitelib\"\n    lib\n    \"-mandir\"\n    man\n    \"-config\"\n    \"%{lib}%/findlib.conf\"\n    \"-no-custom\"\n    \"-no-topfind\" {preinstalled}\n  ]\n  [make \"all\"]\n  [make \"opt\"] {ocaml-native}\n]\ninstall: [\n  [make \"install\"]\n  [\"install\" \"-m\" \"0755\" \"ocaml-stub\" \"%{bin}%/ocaml\"] {preinstalled}\n]\nremove: [\n  [\"ocamlfind\" \"remove\" \"bytes\"]\n  [\n    \"./configure\"\n    \"-bindir\"\n    bin\n    \"-sitelib\"\n    lib\n    \"-mandir\"\n    man\n    \"-config\"\n    \"%{lib}%/findlib.conf\"\n    \"-no-topfind\" {preinstalled}\n  ]\n  [make \"uninstall\"]\n  [\"rm\" \"-f\" \"%{bin}%/ocaml\"] {preinstalled}\n]\ndev-repo: \"git+https://gitlab.camlcity.org/gerd/lib-findlib.git\"",
+          "override": {
+            "build": [ [ "bash", "./_esy/build", "#{ocaml.lib / 'ocaml'}" ] ],
+            "exportedEnv": {
+              "OCAMLLIB": {
+                "val": "#{@opam/ocamlfind.install / 'lib' / 'ocaml'}",
+                "scope": "global"
+              },
+              "CAML_LD_LIBRARY_PATH": {
+                "val":
+                  "#{@opam/ocamlfind.install / 'lib' / 'ocaml' / 'stublibs' : @opam/ocamlfind.install / 'lib' / 'ocaml' : $CAML_LD_LIBRARY_PATH}",
+                "scope": "global"
+              },
+              "OCAML_TOPLEVEL_PATH": {
+                "val": "#{@opam/ocamlfind.install / 'lib' / 'ocaml'}",
+                "scope": "global"
+              }
+            }
+          }
+        }
+      },
+      "dependencies": [ "@esy-ocaml/substs@0.0.1", "@opam/conf-m4@opam:1" ]
+    },
+    "@opam/ocamlbuild@opam:0.12.0": {
+      "record": {
+        "name": "@opam/ocamlbuild",
+        "version": "opam:0.12.0",
+        "source": [
+          "archive:https://opam.ocaml.org/archives/ocamlbuild.0.12.0+opam.tar.gz#md5:6e877d7f40c119c0c6c03f04342f2264",
+          "archive:https://github.com/ocaml/ocamlbuild/archive/0.12.0.tar.gz#md5:442baa19470bd49150f153122e22907b"
+        ],
+        "files": [],
+        "opam": {
+          "name": "ocamlbuild",
+          "version": "0.12.0",
+          "opam":
+            "opam-version: \"1.2\"\nname: \"ocamlbuild\"\nversion: \"0.12.0\"\nmaintainer: \"Gabriel Scherer <gabriel.scherer@gmail.com>\"\nauthors: [\"Nicolas Pouillard\" \"Berke Durak\"]\nlicense: \"LGPL-2 with OCaml linking exception\"\nhomepage: \"https://github.com/ocaml/ocamlbuild/\"\ndoc: \"https://github.com/ocaml/ocamlbuild/blob/master/manual/manual.adoc\"\nbug-reports: \"https://github.com/ocaml/ocamlbuild/issues\"\nconflicts: [\n  \"base-ocamlbuild\"\n  \"ocamlfind\" {< \"1.6.2\"}\n]\navailable: ocaml-version >= \"4.03\"\nbuild: [\n  [\n    make\n    \"-f\"\n    \"configure.make\"\n    \"all\"\n    \"OCAMLBUILD_PREFIX=%{prefix}%\"\n    \"OCAMLBUILD_BINDIR=%{bin}%\"\n    \"OCAMLBUILD_LIBDIR=%{lib}%\"\n    \"OCAMLBUILD_MANDIR=%{man}%\"\n    \"OCAML_NATIVE=%{ocaml-native}%\"\n    \"OCAML_NATIVE_TOOLS=%{ocaml-native}%\"\n  ]\n  [make \"check-if-preinstalled\" \"all\" \"opam-install\"]\n]\ndev-repo: \"git+https://github.com/ocaml/ocamlbuild.git\"",
+          "override": {
+            "build": [
+              [
+                "make", "-f", "configure.make", "all",
+                "OCAMLBUILD_PREFIX=#{self.install}",
+                "OCAMLBUILD_BINDIR=#{self.bin}",
+                "OCAMLBUILD_LIBDIR=#{self.lib}",
+                "OCAMLBUILD_MANDIR=#{self.man}", "OCAMLBUILD_NATIVE=true",
+                "OCAMLBUILD_NATIVE_TOOLS=true"
+              ],
+              [
+                "make", "check-if-preinstalled", "all",
+                "#{os == 'windows' ? 'install' : 'opam-install'}"
+              ]
+            ]
+          }
+        }
+      },
+      "dependencies": [ "@esy-ocaml/substs@0.0.1" ]
+    },
+    "@opam/jbuilder@opam:transition": {
+      "record": {
+        "name": "@opam/jbuilder",
+        "version": "opam:transition",
+        "source": "no-source:",
+        "files": [],
+        "opam": {
+          "name": "jbuilder",
+          "version": "transition",
+          "opam":
+            "opam-version: \"1.2\"\nname: \"jbuilder\"\nversion: \"transition\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/ocaml/dune\"\nbug-reports: \"https://github.com/ocaml/dune/issues\"\ndepends: [\"dune\"]\npost-messages:\n  \"Jbuilder has been renamed and the jbuilder package is now a transition package. Use the dune package instead.\"\ndev-repo: \"git+https://github.com/ocaml/dune.git\"",
+          "override": { "dependencies": { "@opam/ocamlfind": "*" } }
+        }
+      },
+      "dependencies": [
+        "@esy-ocaml/substs@0.0.1", "@opam/dune@opam:1.1.1",
+        "@opam/ocamlfind@opam:1.8.0"
+      ]
+    },
+    "@opam/dune@opam:1.1.1": {
+      "record": {
+        "name": "@opam/dune",
+        "version": "opam:1.1.1",
+        "source": [
+          "archive:https://opam.ocaml.org/archives/dune.1.1.1+opam.tar.gz#md5:7b15c22b89142b88d2544aefee550b09",
+          "archive:https://github.com/ocaml/dune/releases/download/1.1.1/dune-1.1.1.tbz#md5:d1da3d5a9cd9f450bb35724d16fbcaf2"
+        ],
+        "files": [],
+        "opam": {
+          "name": "dune",
+          "version": "1.1.1",
+          "opam":
+            "opam-version: \"1.2\"\nname: \"dune\"\nversion: \"1.1.1\"\nmaintainer: \"opensource@janestreet.com\"\nauthors: \"Jane Street Group, LLC <opensource@janestreet.com>\"\nlicense: \"MIT\"\nhomepage: \"https://github.com/ocaml/dune\"\nbug-reports: \"https://github.com/ocaml/dune/issues\"\nconflicts: [\n  \"jbuilder\" {!= \"transition\"}\n]\navailable: ocaml-version >= \"4.02.3\"\nbuild: [\n  [\"ocaml\" \"configure.ml\" \"--libdir\" lib]\n  [\"ocaml\" \"bootstrap.ml\"]\n  [\"./boot.exe\" \"--release\" \"--subst\"] {pinned}\n  [\"./boot.exe\" \"--release\" \"-j\" jobs]\n]\ndev-repo: \"git+https://github.com/ocaml/dune.git\"",
+          "override": {
+            "build": [
+              [ "ocaml", "bootstrap.ml" ],
+              [ "./boot.exe", "--release", "-j", "4" ]
+            ]
+          }
+        }
+      },
+      "dependencies": [ "@esy-ocaml/substs@0.0.1" ]
+    },
+    "@opam/conf-m4@opam:1": {
+      "record": {
+        "name": "@opam/conf-m4",
+        "version": "opam:1",
+        "source": "no-source:",
+        "files": [],
+        "opam": {
+          "name": "conf-m4",
+          "version": "1",
+          "opam":
+            "opam-version: \"1.2\"\nname: \"conf-m4\"\nversion: \"1\"\nmaintainer: \"tim@gfxmonk.net\"\nlicense: \"GPL-3\"\nhomepage: \"http://www.gnu.org/software/m4/m4.html\"\nbug-reports: \"https://github.com/ocaml/opam-repository/issues\"\nbuild: [\"sh\" \"-exc\" \"echo | m4\"]\ndepexts: [\n  [\"m4\"] {\"debian\"}\n  [\"m4\"] {\"ubuntu\"}\n  [\"m4\"] {\"fedora\"}\n  [\"m4\"] {\"rhel\"}\n  [\"m4\"] {\"centos\"}\n  [\"m4\"] {\"alpine\"}\n  [\"m4\"] {\"nixpkgs\"}\n  [\"m4\"] {\"opensuse\"}\n  [\"m4\"] {\"oraclelinux\"}\n  [\"m4\"] {\"archlinux\"}\n]",
+          "override": null
+        }
+      },
+      "dependencies": [ "@esy-ocaml/substs@0.0.1" ]
+    },
+    "@opam/cmdliner@opam:1.0.2": {
+      "record": {
+        "name": "@opam/cmdliner",
+        "version": "opam:1.0.2",
+        "source": [
+          "archive:https://opam.ocaml.org/archives/cmdliner.1.0.2+opam.tar.gz#md5:b3f734417099fa5d9198bc927b12873f",
+          "archive:http://erratique.ch/software/cmdliner/releases/cmdliner-1.0.2.tbz#md5:ab2f0130e88e8dcd723ac6154c98a881"
+        ],
+        "files": [],
+        "opam": {
+          "name": "cmdliner",
+          "version": "1.0.2",
+          "opam":
+            "opam-version: \"1.2\"\nname: \"cmdliner\"\nversion: \"1.0.2\"\nmaintainer: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nauthors: \"Daniel Bünzli <daniel.buenzl i@erratique.ch>\"\nlicense: \"ISC\"\ntags: [\"cli\" \"system\" \"declarative\" \"org:erratique\"]\nhomepage: \"http://erratique.ch/software/cmdliner\"\ndoc: \"http://erratique.ch/software/cmdliner/doc/Cmdliner\"\nbug-reports: \"https://github.com/dbuenzli/cmdliner/issues\"\ndepends: [\n  \"ocamlfind\" {build}\n  \"ocamlbuild\" {build}\n  \"topkg\" {build}\n  \"result\"\n]\navailable: ocaml-version >= \"4.01.0\"\nbuild: [\"ocaml\" \"pkg/pkg.ml\" \"build\" \"--pinned\" \"%{pinned}%\"]\ndev-repo: \"git+http://erratique.ch/repos/cmdliner.git\"",
+          "override": null
+        }
+      },
+      "dependencies": [
+        "@esy-ocaml/substs@0.0.1", "@opam/ocamlbuild@opam:0.12.0",
+        "@opam/ocamlfind@opam:1.8.0", "@opam/result@opam:1.3",
+        "@opam/topkg@opam:0.9.1"
+      ]
+    },
+    "@esy-ocaml/substs@0.0.1": {
+      "record": {
+        "name": "@esy-ocaml/substs",
+        "version": "0.0.1",
+        "source":
+          "archive:https://registry.npmjs.org/@esy-ocaml/substs/-/substs-0.0.1.tgz#sha1:59ebdbbaedcda123fc7ed8fb2b302b7d819e9a46",
+        "files": [],
+        "opam": null
+      },
+      "dependencies": []
+    }
+  }
+}
